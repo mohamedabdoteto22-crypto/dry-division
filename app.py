@@ -4,10 +4,10 @@ from PIL import Image
 from datetime import date, timedelta
 import pandas as pd
 
-# 1. إعدادات الصفحة والتصميم
+# 1. إعدادات الصفحة والتصميم الملكي
 st.set_page_config(page_title="DRY_DIVISION PRO", page_icon="⚔️", layout="wide")
 
-# 2. الموسيقى التحفيزية
+# 2. وظيفة تشغيل الموسيقى التحفيزية (تأكد من وجود إنترنت لعمل الرابط)
 def add_bg_music(url):
     st.markdown(
         f"""
@@ -19,37 +19,55 @@ def add_bg_music(url):
 
 add_bg_music("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3")
 
-# 3. إعداد الذكاء الاصطناعي (Gemini) - تم تحديث طريقة الاستدعاء لتجنب الخطأ
+# 3. إعداد الذكاء الاصطناعي (Gemini) - إصدار 1.5 فلاش المستقر
 API_KEY = "AIzaSyBBeoQqdGZbG8j66oLBJ6kEc89uucAnUY8"
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# 4. إدارة الحسابات
+# 4. بيانات المطور (Admin) - الدخول من أي جهاز
+ADMIN_USER = "admin_mohamed"
+ADMIN_PASS = "mohamed_dev_2026"
+
+# 5. إدارة الجلسة والحسابات
 if 'user_db' not in st.session_state:
     st.session_state['user_db'] = {} 
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 
-# واجهة تسجيل الدخول
+# --- واجهة تسجيل الدخول ---
 if not st.session_state['logged_in']:
-    st.title("⚔️ DRY_DIVISION ⚡ مركز العمليات")
+    st.title("⚔️ DRY_DIVISION ⚡ COMMAND CENTER")
     tab1, tab2 = st.tabs(["تسجيل الدخول 🔑", "إنشاء حساب محارب 🛡️"])
     
     with tab1:
-        u = st.text_input("اسم المستخدم")
-        p = st.text_input("كلمة المرور", type='password')
+        u_input = st.text_input("اسم المستخدم").strip()
+        p_input = st.text_input("كلمة المرور", type='password').strip()
+        
         if st.button("دخول"):
-            if u in st.session_state['user_db'] and st.session_state['user_db'][u]['password'] == p:
+            # التحقق من الأدمن (الأولوية القصوى)
+            if u_input == ADMIN_USER and p_input == ADMIN_PASS:
                 st.session_state['logged_in'] = True
-                st.session_state['current_user'] = u
+                st.session_state['current_user'] = u_input
+                st.session_state['is_admin'] = True
+                st.success("أهلاً بك يا قائد محمد! تم الدخول بصلاحيات المطور.")
                 st.rerun()
+            
+            # التحقق من المستخدمين العاديين
+            elif u_input in st.session_state['user_db']:
+                if st.session_state['user_db'][u_input]['password'] == p_input:
+                    st.session_state['logged_in'] = True
+                    st.session_state['current_user'] = u_input
+                    st.session_state['is_admin'] = False
+                    st.rerun()
+                else:
+                    st.error("كلمة المرور خاطئة!")
             else:
-                st.error("بيانات الدخول خاطئة")
+                st.error("هذا الحساب غير موجود.. يرجى إنشاء حساب جديد.")
                 
     with tab2:
-        nu = st.text_input("اسم مستخدم جديد")
-        np = st.text_input("كلمة مرور جديدة", type='password')
-        if st.button("تفعيل الحساب الجديد"):
+        nu = st.text_input("اسم مستخدم جديد").strip()
+        np = st.text_input("كلمة مرور جديدة", type='password').strip()
+        if st.button("تفعيل الحساب"):
             if nu and np:
                 st.session_state['user_db'][nu] = {
                     'password': np,
@@ -58,94 +76,113 @@ if not st.session_state['logged_in']:
                     'weight_history': {},
                     'user_info': {} 
                 }
-                st.success("تم إنشاء الحساب! سجل دخولك الآن.")
+                st.success("تم إنشاء الحساب بنجاح! يمكنك الدخول الآن.")
     st.stop()
 
-# بيانات المستخدم الحالي
+# --- بعد تسجيل الدخول بنجاح ---
 current_user = st.session_state['current_user']
-user_profile = st.session_state['user_db'][current_user]
-days_active = (date.today() - user_profile['start_date']).days
-is_trial_active = days_active < 6
+is_admin = st.session_state.get('is_admin', False)
 
-# 5. القائمة الجانبية
+# تحديد حالة الحساب
+if is_admin:
+    is_pro = True
+    days_active = 0
+    is_trial_active = True
+else:
+    user_profile = st.session_state['user_db'][current_user]
+    days_active = (date.today() - user_profile['start_date']).days
+    is_trial_active = days_active < 6
+    is_pro = user_profile['is_pro']
+
+# 6. القائمة الجانبية (Sidebar)
 with st.sidebar:
     st.title("DRY_DIVISION PRO")
+    if is_admin: st.info("وضع المطور: نشط 🛠️")
     st.write(f"المحارب: **{current_user}**")
-    if user_profile['is_pro']:
-        st.success("الاشتراك: PRO فعال ✅")
+    
+    if is_pro or is_admin:
+        st.success("الحساب: PREMIUM ✅")
     elif is_trial_active:
-        st.warning(f"متبقي {6 - days_active} أيام تجريبية")
+        st.warning(f"تجربة: متبقي {6 - days_active} أيام")
     else:
         st.error("انتهت الفترة التجريبية ⚠️")
     
     menu = ["الملف الشخصي 👤", "بروفايل التطور 📊", "ماسح الوجبات AI 🍎", "التحليل البدني 💪", "خطة التغذية AI 🥗", "خطط الاشتراك 💳", "الدعم الفني 📞"]
-    choice = st.selectbox("القائمة", menu)
+    choice = st.selectbox("اختر المهمة", menu)
     if st.button("تسجيل الخروج"):
         st.session_state['logged_in'] = False
         st.rerun()
 
-# --- التنفيذ ---
+# --- الأقسام الوظيفية ---
 
 if choice == "الملف الشخصي 👤":
-    st.header("👤 إعدادات البيانات الشخصية")
-    col1, col2 = st.columns(2)
-    with col1:
-        u_age = st.number_input("السن", 10, 100, 25)
-        u_height = st.number_input("الطول (سم)", 100, 250, 170)
-    with col2:
-        u_weight = st.number_input("الوزن (كجم)", 30.0, 250.0, 75.0)
-        u_goal = st.selectbox("الهدف البدني", ["تنشيف عالي", "ضخامة صافية", "تحسين لياقة", "خسارة وزن"])
+    st.header("👤 بياناتك البدنية")
+    u_age = st.number_input("السن", 10, 100, 25)
+    u_height = st.number_input("الطول (سم)", 100, 250, 170)
+    u_weight = st.number_input("الوزن (كجم)", 30.0, 250.0, 75.0)
+    u_goal = st.selectbox("هدفك الحالي", ["تنشيف عالي", "ضخامة صافية", "خسارة دهون", "تحسين لياقة"])
     if st.button("حفظ البيانات"):
-        user_profile['user_info'] = {"age": u_age, "height": u_height, "weight": u_weight, "goal": u_goal}
-        st.success("تم الحفظ!")
+        if not is_admin:
+            user_profile['user_info'] = {"age": u_age, "height": u_height, "weight": u_weight, "goal": u_goal}
+        st.success("تم الحفظ بنجاح!")
 
 elif choice == "بروفايل التطور 📊":
     st.header("📊 تتبع الوزن")
-    w = st.number_input("سجل وزنك اليوم", 30.0, 250.0)
-    if st.button("حفظ"):
-        user_profile['weight_history'][str(date.today())] = w
+    w = st.number_input("سجل وزن اليوم", 30.0, 250.0)
+    if st.button("تحديث السجل"):
+        if not is_admin:
+            user_profile['weight_history'][str(date.today())] = w
         st.success("تم التحديث")
-    if user_profile['weight_history']:
-        st.line_chart(pd.DataFrame.from_dict(user_profile['weight_history'], orient='index', columns=['Weight']))
+    if not is_admin and user_profile['weight_history']:
+        df = pd.DataFrame.from_dict(user_profile['weight_history'], orient='index', columns=['Weight'])
+        st.line_chart(df)
 
 elif choice == "الدعم الفني 📞":
-    st.header("📞 التواصل مع الإدارة")
-    st.markdown(f"- **واتساب:** [01141930176](https://wa.me/201141930176)\n- **إنستا:** [@Mohamed_36do](https://instagram.com/Mohamed_36do)\n- **إيميل:** mohmaedabsoteto22@gmail.com")
+    st.header("📞 تواصل مع القائد محمد")
+    st.markdown(f"""
+    - **واتساب:** [01141930176](https://wa.me/201141930176)
+    - **إنستجرام:** [@Mohamed_36do](https://instagram.com/Mohamed_36do)
+    - **إيميل:** mohmaedabsoteto22@gmail.com
+    """)
 
 elif choice == "خطط الاشتراك 💳":
-    st.header("💎 خطط العضوية")
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("شهري", "5$")
-    c2.metric("3 أشهر", "12$")
-    c3.metric("6 أشهر", "28.99$")
-    c4.metric("سنوي", "59.99$")
-    st.markdown(f"**فودافون كاش:** `01002884985` | **إنستا باي:** `01141930176`")
-    st.file_uploader("ارفع إيصال التحويل", type=["jpg", "png"])
+    st.header("💎 تطوير العضوية")
+    st.write("الأسعار الحالية:")
+    st.write("1. شهري: **5$** | 2. ثلاث أشهر: **12$**")
+    st.write("3. ستة أشهر: **28.99$** | 4. سنوي: **59.99$**")
+    st.markdown("---")
+    st.subheader("💳 الدفع داخل مصر")
+    st.success("📱 فودافون كاش: `01002884985`")
+    st.info("⚡ إنستا باي: `01141930176`")
+    st.file_uploader("ارفع صورة التحويل لتفعيل الـ PRO", type=["jpg", "png"])
 
-# حماية ومعالجة الـ AI (تم إصلاح منطق إرسال الصور هنا)
+# --- معالجة الـ AI (ماسح الوجبات، التحليل البدني، التغذية) ---
 else:
-    if not user_profile['is_pro'] and not is_trial_active:
-        st.error("❌ انتهت الفترة المجانية. يرجى الاشتراك.")
+    if not is_admin and not is_pro and not is_trial_active:
+        st.error("❌ انتهت الـ 6 أيام التجريبية. يرجى الاشتراك لفتح خدمات الـ AI.")
     else:
-        u_info = str(user_profile.get('user_info', 'بيانات عامة'))
-        img_input = st.file_uploader("ارفع الصورة للتحليل", type=["jpg", "png", "jpeg"])
+        # استرجاع سياق بيانات المستخدم لتقديم تحليل دقيق
+        u_context = "مستخدم رياضي" if is_admin else str(user_profile.get('user_info', 'بيانات عامة'))
         
-        if img_input and st.button("بدء التحليل الذكي ✨"):
-            with st.spinner("جاري التواصل مع الذكاء الاصطناعي..."):
+        img_input = st.file_uploader("ارفع الصورة للتحليل بواسطة AI", type=["jpg", "png", "jpeg"])
+        
+        if img_input and st.button("بدء التحليل ✨"):
+            with st.spinner("جاري التواصل مع الأقمار الصناعية للذكاء الاصطناعي..."):
                 try:
-                    # تحويل الصورة لتنسيق متوافق مع الموديل لتجنب NotFound
-                    image_parts = Image.open(img_input)
+                    # إصلاح خطأ NotFound بتحويل الصورة بشكل سليم
+                    image_data = Image.open(img_input)
                     
                     if choice == "ماسح الوجبات AI 🍎":
-                        prompt = f"حلل السعرات والماكروز لهذه الوجبة بناءً على بيانات المستخدم: {u_info}"
+                        prompt = f"بناءً على بيانات المستخدم ({u_context})، حلل السعرات الحرارية والماكروز في هذه الوجبة وقدم نصيحة."
                     elif choice == "التحليل البدني 💪":
-                        prompt = f"حلل المستوى البدني ونقاط الضعف بناءً على: {u_info}"
-                    else:
-                        prompt = f"صمم نظام غذائي كامل بناءً على الـ InBody المرفق وبيانات: {u_info}"
+                        prompt = f"حلل المستوى البدني، ونسبة الدهون التقريبية، ونقاط الضعف العضلية بناءً على الصورة وبيانات: {u_context}."
+                    else: # خطة التغذية
+                        prompt = f"بناءً على صورة الـ InBody المرفقة وبيانات {u_context}، صمم نظاماً غذائياً كاملاً ليوم واحد."
                     
-                    # إرسال الطلب بشكل سليم
-                    response = model.generate_content([prompt, image_parts])
-                    st.markdown(response.text)
+                    # إرسال الطلب للموديل
+                    response = model.generate_content([prompt, image_data])
+                    st.markdown("### 🤖 تقرير الذكاء الاصطناعي:")
+                    st.write(response.text)
                 except Exception as e:
-                    st.error(f"حدث خطأ: {e}")
-                    st.info("حاول رفع الصورة مرة أخرى أو تأكد من جودة الاتصال.")
+                    st.error(f"عذراً، حدث خطأ تقني: {e}")
+                    st.info("تأكد من أن الصورة واضحة أو حاول مرة أخرى.")
