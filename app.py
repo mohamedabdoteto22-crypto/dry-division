@@ -2,72 +2,105 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 import pandas as pd
-import os
 from datetime import date
 
-# 1. إعدادات الصفحة والسمة (Theme)
+# 1. إعدادات الهوية والتصميم
 st.set_page_config(page_title="DRY_DIVISION AI", page_icon="⚔️", layout="wide")
 
-# 2. إعداد الذكاء الاصطناعي (Gemini)
+# 2. تفعيل الذكاء الاصطناعي (Gemini) بمفتاحك
 API_KEY = "AIzaSyBBeoQqdGZbG8j66oLBJ6kEc89uucAnUY8"
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# 3. العنوان الرئيسي
-st.title("DRY_DIVISION ⚡ AI SYSTEM")
+# 3. واجهة التطبيق الرئيسية
+st.title("DRY_DIVISION ⚡ ULTIMATE AI")
 st.markdown("---")
 
-# 4. القائمة الجانبية (Side Bar)
-menu = ["لوحة التحكم 📊", "ماسح الوجبات الذكي 🍎", "التحليل البدني والتدريب 💪", "سجل البيانات اليدوي 📝"]
-choice = st.sidebar.selectbox("COMMAND CENTER", menu)
+# 4. القائمة الجانبية للتنقل الاحترافي
+with st.sidebar:
+    st.image("https://img.icons8.com/ios-filled/100/ffffff/skull.png") # أيقونة تعبيرية
+    st.title("COMMAND CENTER")
+    menu = [
+        "الملف الشخصي 👤", 
+        "ماسح الوجبات الذكي 🍎", 
+        "خطة التغذية المخصصة 🥗",
+        "تحليل الجسم والتدريب 💪", 
+        "سجل البيانات اليومي 📝"
+    ]
+    choice = st.selectbox("اختر المهمة", menu)
+    st.markdown("---")
+    st.write("STATUS: ONLINE")
 
-# --- الخيار الأول: لوحة التحكم ---
-if choice == "لوحة التحكم 📊":
-    st.header("مرحباً بك في نظام DRY_DIVISION")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("الوزن الحالي", "95 kg")
-    col2.metric("الطول", "175 cm")
-    col3.metric("الحالة", "Active")
-    st.info("هدف النظام: الوصول لأعلى مستويات النشافة العضلية (Maximum Vascularity)")
+# --- 1. الملف الشخصي (لجعل النظام يناسب الجميع) ---
+if choice == "الملف الشخصي 👤":
+    st.header("👤 إعدادات المحارب")
+    col1, col2 = st.columns(2)
+    with col1:
+        name = st.text_input("الاسم الكامل", "محمد عبد القادر")
+        age = st.number_input("السن", 15, 70, 24)
+        gender = st.selectbox("الجنس", ["ذكر", "أنثى"])
+    with col2:
+        weight = st.number_input("الوزن الحالي (كجم)", 40.0, 200.0, 95.0)
+        height = st.number_input("الطول (سم)", 120, 220, 175)
+        goal = st.selectbox("الهدف الاستراتيجي", ["تنشيف ونشافة عضلية (Dryness)", "ضخامة عضلية صافية", "خسارة دهون سريعة"])
 
-# --- الخيار الثاني: ماسح الوجبات ---
+    if st.button("حفظ وتحديث النظام"):
+        st.session_state['user_data'] = f"الاسم: {name}, السن: {age}, الوزن: {weight}, الطول: {height}, الهدف: {goal}"
+        st.success("تم تحديث بروتوكول البيانات الشخصية بنجاح.")
+
+# --- 2. ماسح الوجبات الذكي ---
 elif choice == "ماسح الوجبات الذكي 🍎":
-    st.header("📷 تحليل الوجبات بالذكاء الاصطناعي")
-    img_file = st.file_uploader("ارفع صورة وجبتك", type=["jpg", "png", "jpeg"])
+    st.header("📷 تحليل الوجبات الفوري")
+    st.info("ارفع صورة الوجبة ليقوم الذكاء الاصطناعي بتقدير السعرات")
+    img_file = st.file_uploader("Upload Meal Image", type=["jpg", "png", "jpeg"])
     if img_file:
         img = Image.open(img_file)
-        st.image(img, width=400)
-        if st.button("بدء تحليل السعرات"):
-            with st.spinner('جاري قراءة المكونات...'):
-                prompt = "بصفتك خبير تغذية، حلل الصورة بدقة وأعطني: 1- اسم الوجبة 2- السعرات التقريبية 3- جرامات البروتين والكارب والدهون 4- نصيحة سريعة لملاءمتها لنظام التنشيف."
+        st.image(img, width=400, caption="المستشعرات تلتقط البيانات...")
+        if st.button("تحليل المكونات"):
+            user_info = st.session_state.get('user_data', "بيانات عامة لمستخدم رياضي")
+            with st.spinner('جاري المسح...'):
+                prompt = f"أنت خبير تغذية. حلل هذه الوجبة لمستخدم ببيانات: ({user_info}). اذكر السعرات، البروتين، الكارب، الدهون، ومدى ملاءمتها لهدفه."
                 response = model.generate_content([prompt, img])
                 st.markdown(response.text)
 
-# --- الخيار الثالث: التحليل البدني والتدريب ---
-elif choice == "التحليل البدني والتدريب 💪":
-    st.header("🛡️ التقييم البدني الشامل")
-    st.write("ارفع صور الجسم (أربع جهات) أو نتيجة الـ InBody")
-    files = st.file_uploader("اختر الصور", accept_multiple_files=True, type=["jpg", "png", "jpeg"])
-    
-    if files:
-        for f in files:
-            st.image(Image.open(f), width=250)
-            
-        if st.button("إصدار التقرير والنظام التدريبي"):
-            with st.spinner('جاري تحليل التكوين العضلي...'):
-                prompt = "أنت مدرب كمال أجسام متخصص في التجهيز للبطولات. حلل هذه الصور (جسم أو إنبادي) وقدم: 1- تقدير نسبة الدهون 2- تقييم الكتلة العضلية والنشافة (Dryness) 3- نقاط الضعف التي تحتاج تركيز 4- جدول تدريبي 3 أيام مكثف جداً للوصول لهدف التنشيف."
-                # نرسل أول صورة كعينة للتحليل
-                img_to_analyze = Image.open(files[0])
-                response = model.generate_content([prompt, img_to_analyze])
-                st.success("التقرير الفني والنظام المقترح:")
+# --- 3. خطة التغذية المخصصة ---
+elif choice == "خطة التغذية المخصصة 🥗":
+    st.header("🥗 نظام غذائي مخصص (InBody Based)")
+    st.write("ارفع صورة الـ InBody لتصميم وجبات تناسب طبيعة جسمك")
+    inbody_img = st.file_uploader("Upload InBody Report", type=["jpg", "png", "jpeg"])
+    if inbody_img:
+        img = Image.open(inbody_img)
+        st.image(img, width=300)
+        if st.button("توليد خطة الوجبات"):
+            user_info = st.session_state.get('user_data', "بيانات عامة")
+            with st.spinner('جاري تصميم الخطة المخصصة...'):
+                prompt = f"بناءً على بيانات المستخدم ({user_info}) وتقرير الـ InBody، صمم برنامج غذائي كامل (فطور، غداء، عشاء، سناك) يركز على تحسين التكوين العضلي والنشافة."
+                response = model.generate_content([prompt, img])
+                st.success("الخطة الغذائية المقترحة:")
                 st.markdown(response.text)
 
-# --- الخيار الرابع: السجل اليدوي ---
-elif choice == "سجل البيانات اليدوي 📝":
-    st.header("تحديث البيانات اليومية")
-    w = st.number_input("الوزن (kg)", value=95.0)
-    c = st.number_input("السعرات المستهلكة", value=2000)
-    if st.button("حفظ في السجل"):
+# --- 4. تحليل الجسم والتدريب ---
+elif choice == "تحليل الجسم والتدريب 💪":
+    st.header("🛡️ تقييم الحالة البدنية والتدريب")
+    st.write("ارفع صور الجسم (أمام، خلف، جوانب) أو الـ InBody")
+    files = st.file_uploader("ارفع الصور هنا", accept_multiple_files=True, type=["jpg", "png", "jpeg"])
+    if files:
+        for f in files:
+            st.image(Image.open(f), width=200)
+        if st.button("إصدار التقرير والجدول التدريبي"):
+            user_info = st.session_state.get('user_data', "بيانات عامة")
+            with st.spinner('جاري تحليل الكتلة العضلية والنشافة...'):
+                prompt = f"أنت مدرب محترف. حلل هذه الصور للمستخدم ({user_info}) وأعط: 1- تقدير نسبة الدهون. 2- نقاط القوة والضعف. 3- جدول تدريب 3 أيام مكثف يناسب حالته."
+                img_to_analyze = Image.open(files[0])
+                response = model.generate_content([prompt, img_to_analyze])
+                st.markdown(response.text)
+
+# --- 5. سجل البيانات اليومي ---
+elif choice == "سجل البيانات اليومي 📝":
+    st.header("📝 التتبع اليدوي")
+    w = st.number_input("تحديث الوزن (kg)", value=95.0)
+    c = st.number_input("السعرات اليومية المستهلكة", value=2000)
+    if st.button("حفظ السجل"):
         with open("dry_log.csv", "a") as f:
             f.write(f"{date.today()},{w},{c}\n")
-        st.success("تم التحديث بنجاح")
+        st.success("تم تأمين البيانات في السجل التاريخي.")
