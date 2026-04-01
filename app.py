@@ -4,10 +4,10 @@ from PIL import Image
 import pandas as pd
 from datetime import date
 
-# 1. إعدادات الصفحة
-st.set_page_config(page_title="DRY_DIVISION PRO", page_icon="⚔️", layout="wide")
+# 1. إعدادات الصفحة الفخمة
+st.set_page_config(page_title="DRY_DIVISION PRO 2026", page_icon="⚔️", layout="wide")
 
-# 2. الموسيقى التحفيزية
+# 2. الموسيقى التحفيزية (تأكد من عمل الرابط)
 st.markdown(
     f"""
     <iframe src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" allow="autoplay" style="display:none"></iframe>
@@ -16,16 +16,19 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# 3. إعداد الذكاء الاصطناعي (Gemini)
+# 3. إعداد الذكاء الاصطناعي - تحديث لموديل 2026 (Gemini 2.0 Flash)
 API_KEY = "AIzaSyBBeoQqdGZbG8j66oLBJ6kEc89uucAnUY8"
 genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
 
-# 4. بيانات المطور (Admin)
+# استخدام أحدث موديل متوفر في 2026 لضمان أفضل تحليل للصور
+MODEL_NAME = 'gemini-2.0-flash-exp' # أو 'gemini-2.0-flash' حسب التوفر في وقت التشغيل
+model = genai.GenerativeModel(MODEL_NAME)
+
+# 4. بيانات المطور (Admin) - دخول من أي جهاز
 ADMIN_USER = "admin_mohamed"
 ADMIN_PASS = "mohamed_dev_2026"
 
-# 5. إدارة الحسابات والجلسة
+# 5. إدارة الحسابات والجلسة (Session State)
 if 'user_db' not in st.session_state:
     st.session_state['user_db'] = {} 
 if 'logged_in' not in st.session_state:
@@ -33,7 +36,7 @@ if 'logged_in' not in st.session_state:
 
 # --- واجهة تسجيل الدخول ---
 if not st.session_state['logged_in']:
-    st.title("⚔️ DRY_DIVISION ⚡ COMMAND CENTER")
+    st.title("⚔️ DRY_DIVISION ⚡ COMMAND CENTER 2026")
     t1, t2 = st.tabs(["تسجيل الدخول 🔑", "إنشاء حساب محارب 🛡️"])
     
     with t1:
@@ -62,7 +65,7 @@ if not st.session_state['logged_in']:
                     'password': np, 'start_date': date.today(),
                     'is_pro': False, 'weight_history': {}, 'user_info': {}
                 }
-                st.success("تم إنشاء الحساب! سجل دخولك الآن.")
+                st.success("تم إنشاء الحساب بنجاح!")
     st.stop()
 
 # --- بعد تسجيل الدخول ---
@@ -79,8 +82,8 @@ else:
 
 # 6. القائمة الجانبية
 with st.sidebar:
-    st.title("DRY_DIVISION PRO")
-    if is_admin: st.info("وضع المطور نشط 🛠️")
+    st.title("DRY_DIVISION 2026")
+    if is_admin: st.info("👑 وضع المطور نشط")
     st.write(f"المحارب: **{current_user}**")
     status = "PREMIUM ✅" if (is_pro or is_admin) else (f"تجربة: {6-days_active} يوم" if is_trial_active else "منتهي ⚠️")
     st.markdown(f"الحالة: **{status}**")
@@ -101,52 +104,43 @@ if choice == "الملف الشخصي 👤":
     with c2:
         weight = st.number_input("الوزن (كجم)", 30.0, 250.0, 70.0)
         goal = st.selectbox("الهدف", ["تنشيف عالي", "ضخامة صافية", "خسارة وزن"])
-    if st.button("حفظ"):
+    if st.button("حفظ البيانات"):
         if not is_admin: user_profile['user_info'] = {"age": age, "height": height, "weight": weight, "goal": goal}
         st.success("تم الحفظ!")
-
-elif choice == "بروفايل التطور 📊":
-    st.header("📊 سجل الوزن")
-    w_input = st.number_input("وزن اليوم", 30.0, 250.0)
-    if st.button("تسجيل"):
-        if not is_admin: user_profile['weight_history'][str(date.today())] = w_input
-        st.success("تم التسجيل")
-    if not is_admin and user_profile['weight_history']:
-        st.line_chart(pd.DataFrame.from_dict(user_profile['weight_history'], orient='index', columns=['Weight']))
 
 elif choice == "خطط الاشتراك 💳":
     st.header("💎 خطط العضوية PRO")
     st.write("شهري: 5$ | 3 أشهر: 12$ | 6 أشهر: 28.99$ | سنوي: 59.99$")
     st.success("📱 فودافون كاش: 01002884985")
     st.info("⚡ إنستا باي: 01141930176")
-    st.file_uploader("ارفع إيصال التحويل", type=["jpg", "png"])
 
 elif choice == "الدعم الفني 📞":
-    st.header("📞 تواصل معنا")
-    st.markdown("- **واتساب:** [01141930176](https://wa.me/201141930176)\n- **إنستا:** [@Mohamed_36do](https://instagram.com/Mohamed_36do)")
+    st.header("📞 التواصل المباشر")
+    st.markdown("- **واتساب القائد:** [01141930176](https://wa.me/201141930176)")
 
-# --- معالجة الـ AI المستقرة ---
+# --- معالجة الـ AI (باستخدام موديل 2026 المطور) ---
 else:
     if not is_admin and not is_pro and not is_trial_active:
         st.error("❌ انتهت الفترة المجانية. يرجى الاشتراك.")
     else:
-        u_ctx = "مستخدم رياضي" if is_admin else str(user_profile.get('user_info', 'بيانات عامة'))
-        img_file = st.file_uploader("ارفع الصورة للتحليل", type=["jpg", "png", "jpeg"])
+        u_ctx = "مستخدم رياضي محترف" if is_admin else str(user_profile.get('user_info', 'بيانات عامة'))
+        img_file = st.file_uploader("ارفع الصورة للتحليل (الوجبة / الجسم / InBody)", type=["jpg", "png", "jpeg"])
         
-        if img_file and st.button("بدء التحليل ✨"):
-            with st.spinner("جاري التحليل الذكي..."):
+        if img_file and st.button("بدء التحليل الذكي ✨"):
+            with st.spinner("جاري التحليل باستخدام أحدث تقنيات 2026..."):
                 try:
-                    # تحويل الصورة لضمان التوافق التام مع Gemini
+                    # تحويل الصورة لصيغة RGB لضمان قراءتها بشكل صحيح
                     img_data = Image.open(img_file).convert("RGB")
                     
                     prompts = {
-                        "ماسح الوجبات AI 🍎": f"حلل السعرات والماكروز لهذه الوجبة بناءً على: {u_ctx}",
-                        "التحليل البدني 💪": f"حلل المستوى البدني ونسبة الدهون من الصورة بناءً على: {u_ctx}",
-                        "خطة التغذية AI 🥗": f"صمم نظام غذائي كامل بناءً على الـ InBody وبيانات: {u_ctx}"
+                        "ماسح الوجبات AI 🍎": f"حلل بدقة السعرات والماكروز لهذه الوجبة للمستخدم: {u_ctx}",
+                        "التحليل البدني 💪": f"حلل المستوى البدني ونسبة الدهون ونقاط القوة والضعف بناءً على: {u_ctx}",
+                        "خطة التغذية AI 🥗": f"حلل صورة الـ InBody وصمم نظام غذائي كامل لليوم بناءً على: {u_ctx}"
                     }
                     
                     response = model.generate_content([prompts[choice], img_data])
-                    st.markdown("### 🤖 النتيجة:")
+                    st.markdown("### 🤖 تقرير DRY_DIVISION AI:")
                     st.write(response.text)
                 except Exception as e:
                     st.error(f"خطأ تقني: {e}")
+                    st.info("تأكد من تحديث مكتبة جوجل في ملف requirements.txt")
